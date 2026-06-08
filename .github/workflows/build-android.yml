@@ -57,24 +57,6 @@ jobs:
             -keypass southwallet123 \
             -dname "CN=South Wallet, OU=Mobile, O=QTBMSouth, L=Aden, ST=Aden, C=YE"
 
-      - name: Inject signing config into build.gradle
-        run: |
-          cat >> android/app/build.gradle << 'EOF'
-
-          android.signingConfigs.release {
-              storeFile file('south-wallet.keystore')
-              storePassword 'southwallet123'
-              keyAlias 'southwallet'
-              keyPassword 'southwallet123'
-          }
-          android.buildTypes.debug.signingConfig android.signingConfigs.release
-          android.buildTypes.release {
-              minifyEnabled false
-              proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-              signingConfig android.signingConfigs.release
-          }
-          EOF
-
       - name: Build Debug APK
         working-directory: android
         run: ./gradlew assembleDebug

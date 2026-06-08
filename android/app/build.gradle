@@ -1,5 +1,8 @@
 apply plugin: 'com.android.application'
 
+def keystoreFile = file('south-wallet.keystore')
+def hasKeystore = keystoreFile.exists()
+
 android {
     namespace = "com.qtbm.south"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -16,10 +19,28 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    if (hasKeystore) {
+        signingConfigs {
+            release {
+                storeFile keystoreFile
+                storePassword 'southwallet123'
+                keyAlias 'southwallet'
+                keyPassword 'southwallet123'
+            }
+        }
+    }
     buildTypes {
+        debug {
+            if (hasKeystore) {
+                signingConfig signingConfigs.release
+            }
+        }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            if (hasKeystore) {
+                signingConfig signingConfigs.release
+            }
         }
     }
 }
