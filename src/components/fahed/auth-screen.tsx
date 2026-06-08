@@ -5,9 +5,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Mail, Lock, User, Eye, EyeOff, ArrowLeft,
   Phone, KeyRound, PenLine, Trash2, Check,
-  MapPin, MessageCircle, PhoneCall, ChevronLeft, ChevronRight
+  MapPin, MessageCircle, PhoneCall, ChevronLeft, ChevronRight,
+  CreditCard
 } from 'lucide-react';
 import { useAppStore } from '@/lib/store';
+import { useTheme } from 'next-themes';
 import { auth, database } from '@/lib/firebase';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import { ref, get, update, onValue, off } from 'firebase/database';
@@ -279,6 +281,8 @@ function BannerCarousel({ banners }: { banners: AuthBanner[] }) {
 // ─── Main Auth Screen ────────────────────────────────────────────────
 export default function AuthScreen() {
   const { setUser } = useAppStore();
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
 
   const [step, setStep] = useState<AuthStep>('login');
   const [isLoading, setIsLoading] = useState(false);
@@ -292,7 +296,10 @@ export default function AuthScreen() {
 
   // Register fields
   const [regFirstName, setRegFirstName] = useState('');
-  const [regLastName, setRegLastName] = useState('');
+  const [regSecondName, setRegSecondName] = useState('');
+  const [regThirdName, setRegThirdName] = useState('');
+  const [regFamilyName, setRegFamilyName] = useState('');
+  const [regNationalId, setRegNationalId] = useState('');
   const [regEmail, setRegEmail] = useState('');
   const [regPassword, setRegPassword] = useState('');
   const [showRegPassword, setShowRegPassword] = useState(false);
@@ -409,8 +416,8 @@ export default function AuthScreen() {
       setError('يرجى إدخال الاسم الأول');
       return;
     }
-    if (!regLastName.trim()) {
-      setError('يرجى إدخال الاسم الأخير');
+    if (!regSecondName.trim()) {
+      setError('يرجى إدخال الاسم الثاني');
       return;
     }
     if (!regEmail) {
@@ -450,16 +457,16 @@ export default function AuthScreen() {
       const uid = userCredential.user.uid;
       const newUserId = generateUserId();
       const isAdminEmail = regEmail.toLowerCase().includes('admin');
-      const fullName = `${regFirstName.trim()} ${regLastName.trim()}`;
+      const fullName = `${regFirstName.trim()} ${regSecondName.trim()} ${regThirdName.trim()} ${regFamilyName.trim()}`.trim();
       const userData = {
         email: regEmail,
         phone: regPhone ? `+967${regPhone}` : '',
         name: fullName,
         firstName: regFirstName.trim(),
-        secondName: '',
-        thirdName: '',
-        familyName: regLastName.trim(),
-        nationalId: '',
+        secondName: regSecondName.trim(),
+        thirdName: regThirdName.trim(),
+        familyName: regFamilyName.trim(),
+        nationalId: regNationalId.trim(),
         avatar: '',
         role: isAdminEmail ? 'admin' as const : 'user' as const,
         userId: newUserId,
@@ -486,9 +493,9 @@ export default function AuthScreen() {
       await update(ref(database), firebaseUpdates);
       setUser({
         id: uid, email: regEmail, phone: regPhone ? `+967${regPhone}` : '',
-        name: fullName, firstName: regFirstName.trim(), secondName: '',
-        thirdName: '', familyName: regLastName.trim(),
-        nationalId: '', avatar: '', role: isAdminEmail ? 'admin' : 'user',
+        name: fullName, firstName: regFirstName.trim(), secondName: regSecondName.trim(),
+        thirdName: regThirdName.trim(), familyName: regFamilyName.trim(),
+        nationalId: regNationalId.trim(), avatar: '', role: isAdminEmail ? 'admin' : 'user',
         userId: newUserId, kycStatus: 'pending',
         isBlocked: false, balanceYER: 0, balanceSAR: 0, balanceUSD: 0,
         cardType: '', cardNumber: '', cardIssuedAt: '', governorate: '',
@@ -531,10 +538,10 @@ export default function AuthScreen() {
   };
 
   // ─── Common input styles ────────────────────────────────────────
-  const inputBaseClass = "w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3.5 text-sm text-gray-900 outline-none transition-all focus:border-red-400 focus:ring-2 focus:ring-red-100 placeholder:text-gray-400";
+  const inputBaseClass = "w-full bg-gray-50 dark:bg-[#1A1A1A] border border-gray-200 dark:border-[rgba(255,255,255,0.08)] rounded-xl px-4 py-3.5 text-sm text-gray-900 dark:text-white outline-none transition-all focus:border-red-400 focus:ring-2 focus:ring-red-100 dark:focus:ring-red-900/30 placeholder:text-gray-400";
 
   return (
-    <div className="min-h-screen flex flex-col bg-white" dir="rtl">
+    <div className="min-h-screen flex flex-col bg-white dark:bg-[#0F0F0F]" dir="rtl">
       {/* ─── Header Area ─────────────────────────────────────────── */}
       <div className="flex flex-col items-center pt-10 pb-4 px-6">
         {/* Logo */}
@@ -543,7 +550,7 @@ export default function AuthScreen() {
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: 'spring', stiffness: 200, damping: 15 }}
           className="w-20 h-20 rounded-2xl overflow-hidden mb-4 flex items-center justify-center"
-          style={{ boxShadow: '0 4px 16px rgba(230,0,0,0.15)', background: '#FFFFFF' }}
+          style={{ boxShadow: '0 4px 16px rgba(230,0,0,0.15)', background: isDark ? '#0F0F0F' : '#FFFFFF' }}
         >
           <img src={LOGO_BASE64} alt="محفظة الجنوب" className="w-full h-full object-contain p-1" />
         </motion.div>
@@ -552,7 +559,7 @@ export default function AuthScreen() {
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.1 }}
-          className="text-xl font-bold text-gray-900"
+          className="text-xl font-bold text-gray-900 dark:text-white"
         >
           مرحباً بك في محفظة الجنوب
         </motion.h1>
@@ -560,7 +567,7 @@ export default function AuthScreen() {
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.2 }}
-          className="text-sm mt-1 text-gray-500"
+          className="text-sm mt-1 text-gray-500 dark:text-gray-400"
         >
           كل ما تريد معرفته عن خدماتنا
         </motion.p>
@@ -681,17 +688,17 @@ export default function AuthScreen() {
               <div className="flex items-center gap-2 mb-1">
                 <button
                   onClick={() => { setStep('login'); setError(''); setSuccess(''); }}
-                  className="w-8 h-8 rounded-full flex items-center justify-center bg-gray-100"
+                  className="w-8 h-8 rounded-full flex items-center justify-center bg-gray-100 dark:bg-[#1A1A1A]"
                 >
-                  <ArrowLeft size={16} className="text-gray-600" />
+                  <ArrowLeft size={16} className="text-gray-600 dark:text-gray-300" />
                 </button>
-                <h2 className="text-lg font-bold text-gray-900">إنشاء حساب جديد</h2>
+                <h2 className="text-lg font-bold text-gray-900 dark:text-white">إنشاء حساب جديد</h2>
               </div>
 
               {/* Step indicator */}
               <div className="flex gap-2 mb-2">
                 <div className="flex-1 h-1.5 rounded-full bg-red-600" />
-                <div className="flex-1 h-1.5 rounded-full bg-gray-200" />
+                <div className="flex-1 h-1.5 rounded-full bg-gray-200 dark:bg-[#333]" />
               </div>
 
               {/* First Name */}
@@ -706,15 +713,52 @@ export default function AuthScreen() {
                 />
               </div>
 
-              {/* Last Name */}
+              {/* Second Name */}
               <div className="relative">
                 <User size={18} strokeWidth={1.5} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="الاسم الأخير"
-                  value={regLastName}
-                  onChange={(e) => setRegLastName(e.target.value)}
+                  placeholder="الاسم الثاني"
+                  value={regSecondName}
+                  onChange={(e) => setRegSecondName(e.target.value)}
                   className={`${inputBaseClass} pr-11`}
+                />
+              </div>
+
+              {/* Third Name */}
+              <div className="relative">
+                <User size={18} strokeWidth={1.5} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="السم الثالث"
+                  value={regThirdName}
+                  onChange={(e) => setRegThirdName(e.target.value)}
+                  className={`${inputBaseClass} pr-11`}
+                />
+              </div>
+
+              {/* Family Name */}
+              <div className="relative">
+                <User size={18} strokeWidth={1.5} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="اللقب"
+                  value={regFamilyName}
+                  onChange={(e) => setRegFamilyName(e.target.value)}
+                  className={`${inputBaseClass} pr-11`}
+                />
+              </div>
+
+              {/* National ID */}
+              <div className="relative">
+                <CreditCard size={18} strokeWidth={1.5} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="رقم البطاقة"
+                  value={regNationalId}
+                  onChange={(e) => setRegNationalId(e.target.value)}
+                  className={`${inputBaseClass} pr-11`}
+                  dir="ltr"
                 />
               </div>
 
@@ -753,17 +797,17 @@ export default function AuthScreen() {
               </div>
 
               {/* Phone */}
-              <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3.5 transition-all focus-within:border-red-400 focus-within:ring-2 focus-within:ring-red-100">
+              <div className="flex items-center gap-2 bg-gray-50 dark:bg-[#1A1A1A] border border-gray-200 dark:border-[rgba(255,255,255,0.08)] rounded-xl px-4 py-3.5 transition-all focus-within:border-red-400 focus-within:ring-2 focus-within:ring-red-100 dark:focus-within:ring-red-900/30">
                 <YemenFlagIndicator />
-                <span className="text-sm font-medium text-gray-500 shrink-0" dir="ltr">+967</span>
-                <div className="w-px h-5 bg-gray-300 shrink-0" />
+                <span className="text-sm font-medium text-gray-500 dark:text-gray-400 shrink-0" dir="ltr">+967</span>
+                <div className="w-px h-5 bg-gray-300 dark:bg-gray-600 shrink-0" />
                 <Phone size={16} className="text-gray-400 shrink-0" />
                 <input
                   type="tel"
                   placeholder="7XX XXX XXX"
                   value={regPhone}
                   onChange={(e) => handlePhoneChange(e.target.value)}
-                  className="flex-1 bg-transparent outline-none text-sm text-gray-900 placeholder:text-gray-400"
+                  className="flex-1 bg-transparent outline-none text-sm text-gray-900 dark:text-white placeholder:text-gray-400"
                   dir="ltr"
                 />
               </div>
@@ -774,8 +818,8 @@ export default function AuthScreen() {
                   onClick={() => setRegGender('male')}
                   className={`flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl border-2 transition-all ${
                     regGender === 'male'
-                      ? 'border-red-500 bg-red-50 text-red-600'
-                      : 'border-gray-200 bg-gray-50 text-gray-500'
+                      ? 'border-red-500 bg-red-50 dark:bg-red-900/20 text-red-600'
+                      : 'border-gray-200 dark:border-[rgba(255,255,255,0.08)] bg-gray-50 dark:bg-[#1A1A1A] text-gray-500 dark:text-gray-400'
                   }`}
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -788,8 +832,8 @@ export default function AuthScreen() {
                   onClick={() => setRegGender('female')}
                   className={`flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl border-2 transition-all ${
                     regGender === 'female'
-                      ? 'border-red-500 bg-red-50 text-red-600'
-                      : 'border-gray-200 bg-gray-50 text-gray-500'
+                      ? 'border-red-500 bg-red-50 dark:bg-red-900/20 text-red-600'
+                      : 'border-gray-200 dark:border-[rgba(255,255,255,0.08)] bg-gray-50 dark:bg-[#1A1A1A] text-gray-500 dark:text-gray-400'
                   }`}
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -807,12 +851,12 @@ export default function AuthScreen() {
                   className={`mt-0.5 w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-all ${
                     agreedToTerms
                       ? 'bg-red-600 border-red-600'
-                      : 'bg-white border-gray-300'
+                      : 'bg-white dark:bg-[#1A1A1A] border-gray-300 dark:border-[rgba(255,255,255,0.08)]'
                   }`}
                 >
                   {agreedToTerms && <Check size={12} className="text-white" strokeWidth={3} />}
                 </button>
-                <span className="text-sm text-gray-600">
+                <span className="text-sm text-gray-600 dark:text-gray-300">
                   أوافق على{' '}
                   <span className="text-red-600 font-medium cursor-pointer">الشروط والأحكام</span>
                 </span>
@@ -858,11 +902,11 @@ export default function AuthScreen() {
               <div className="flex items-center gap-2 mb-1">
                 <button
                   onClick={() => { setStep('register'); setError(''); }}
-                  className="w-8 h-8 rounded-full flex items-center justify-center bg-gray-100"
+                  className="w-8 h-8 rounded-full flex items-center justify-center bg-gray-100 dark:bg-[#1A1A1A]"
                 >
-                  <ArrowLeft size={16} className="text-gray-600" />
+                  <ArrowLeft size={16} className="text-gray-600 dark:text-gray-300" />
                 </button>
-                <h2 className="text-lg font-bold text-gray-900">التوقيع الإلكتروني</h2>
+                <h2 className="text-lg font-bold text-gray-900 dark:text-white">التوقيع الإلكتروني</h2>
               </div>
 
               {/* Step indicator */}
@@ -876,7 +920,7 @@ export default function AuthScreen() {
                 <div className="w-14 h-14 rounded-full flex items-center justify-center mb-3" style={{ background: 'rgba(230,0,0,0.08)' }}>
                   <PenLine size={28} className="text-red-600" />
                 </div>
-                <p className="text-xs text-center text-gray-500 max-w-[280px]">
+                <p className="text-xs text-center text-gray-500 dark:text-gray-400 max-w-[280px]">
                   يرجى التوقيع أدناه لإتمام إنشاء حسابك
                 </p>
               </div>
@@ -921,18 +965,18 @@ export default function AuthScreen() {
               <div className="flex items-center gap-2 mb-1">
                 <button
                   onClick={() => { setStep('login'); setError(''); setSuccess(''); }}
-                  className="w-8 h-8 rounded-full flex items-center justify-center bg-gray-100"
+                  className="w-8 h-8 rounded-full flex items-center justify-center bg-gray-100 dark:bg-[#1A1A1A]"
                 >
-                  <ArrowLeft size={16} className="text-gray-600" />
+                  <ArrowLeft size={16} className="text-gray-600 dark:text-gray-300" />
                 </button>
-                <h2 className="text-lg font-bold text-gray-900">استعادة كلمة المرور</h2>
+                <h2 className="text-lg font-bold text-gray-900 dark:text-white">استعادة كلمة المرور</h2>
               </div>
 
               <div className="flex flex-col items-center mb-4">
                 <div className="w-14 h-14 rounded-full flex items-center justify-center mb-3" style={{ background: 'rgba(230,0,0,0.08)' }}>
                   <KeyRound size={28} className="text-red-600" />
                 </div>
-                <p className="text-xs text-center text-gray-500 max-w-[250px]">
+                <p className="text-xs text-center text-gray-500 dark:text-gray-400 max-w-[250px]">
                   أدخل البريد الإلكتروني المرتبط بحسابك وسنرسل لك رابط إعادة التعيين
                 </p>
               </div>
@@ -987,7 +1031,7 @@ export default function AuthScreen() {
             rel="noopener noreferrer"
             className="flex flex-col items-center gap-1 text-gray-400 hover:text-green-600 transition-colors"
           >
-            <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-full bg-gray-50 dark:bg-[#1A1A1A] flex items-center justify-center">
               <MessageCircle size={20} />
             </div>
             <span className="text-[10px]">واتساب</span>
@@ -998,7 +1042,7 @@ export default function AuthScreen() {
             href="#"
             className="flex flex-col items-center gap-1 text-gray-400 hover:text-red-600 transition-colors"
           >
-            <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-full bg-gray-50 dark:bg-[#1A1A1A] flex items-center justify-center">
               <MapPin size={20} />
             </div>
             <span className="text-[10px]">الموقع</span>
@@ -1009,7 +1053,7 @@ export default function AuthScreen() {
             href="tel:+967777777777"
             className="flex flex-col items-center gap-1 text-gray-400 hover:text-blue-600 transition-colors"
           >
-            <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-full bg-gray-50 dark:bg-[#1A1A1A] flex items-center justify-center">
               <PhoneCall size={20} />
             </div>
             <span className="text-[10px]">اتصل بنا</span>

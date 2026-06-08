@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LOGO_BASE64 } from '@/lib/logo';
+import { useTheme } from 'next-themes';
 
 interface SplashScreenProps {
   onComplete: () => void;
@@ -11,6 +12,8 @@ interface SplashScreenProps {
 export default function SplashScreen({ onComplete }: SplashScreenProps) {
   const [phase, setPhase] = useState<'loading' | 'logo' | 'name' | 'tagline' | 'exiting'>('loading');
   const [progress, setProgress] = useState(0);
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
 
   // Phase 1: Loading with progress bar (0-2000ms)
   useEffect(() => {
@@ -73,7 +76,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
       {phase !== 'exiting' ? (
         <motion.div
           className="fixed inset-0 flex flex-col items-center justify-center overflow-hidden"
-          style={{ background: '#FFFFFF' }}
+          style={{ background: isDark ? '#0F0F0F' : '#FFFFFF' }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.5, ease: 'easeInOut' }}
         >
@@ -117,7 +120,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
                         style={{
                           width: '100%',
                           height: '100%',
-                          background: 'rgba(0,0,0,0.2)',
+                          background: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)',
                           borderRadius: 4,
                           transform: 'rotate(45deg) scale(0.7)',
                         }}
@@ -145,10 +148,10 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
                   style={{
                     width: '100%',
                     height: '100%',
-                    background: 'rgba(0,0,0,0.3)',
+                    background: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)',
                     borderRadius: 6,
                     transform: 'rotate(45deg) scale(0.7)',
-                    boxShadow: '0 0 20px rgba(0,0,0,0.1)',
+                    boxShadow: isDark ? '0 0 20px rgba(255,255,255,0.05)' : '0 0 20px rgba(0,0,0,0.1)',
                   }}
                 />
               </motion.div>
@@ -172,8 +175,8 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
               style={{
                 width: 96,
                 height: 96,
-                background: '#FFFFFF',
-                boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+                background: isDark ? '#0F0F0F' : '#FFFFFF',
+                boxShadow: isDark ? '0 4px 20px rgba(255,255,255,0.05)' : '0 4px 20px rgba(0,0,0,0.1)',
               }}
             >
               <img src={LOGO_BASE64} alt="محفظة الجنوب" className="w-[72px] h-[72px] object-contain" />
@@ -188,7 +191,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
               y: showName ? 0 : 15,
             }}
             transition={{ duration: 0.5, ease: 'easeOut' }}
-            className="text-2xl font-bold text-gray-800 mb-2"
+            className="text-2xl font-bold text-gray-800 dark:text-white mb-2"
           >
             محفظة الجنوب
           </motion.h1>
@@ -202,7 +205,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
             }}
             transition={{ duration: 0.5, ease: 'easeOut' }}
             className="text-sm"
-            style={{ color: 'rgba(0,0,0,0.5)' }}
+            style={{ color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)' }}
           >
             محفظتك الرقمية الموثوقة
           </motion.p>
@@ -217,8 +220,8 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
                 transition={{ delay: 0.3 }}
                 className="flex items-center justify-between mb-2"
               >
-                <span className="text-[10px]" style={{ color: 'rgba(0,0,0,0.4)' }}>جارٍ التحميل</span>
-                <span className="text-[10px] font-mono" style={{ color: 'rgba(0,0,0,0.5)' }} dir="ltr">
+                <span className="text-[10px]" style={{ color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)' }}>جارٍ التحميل</span>
+                <span className="text-[10px] font-mono" style={{ color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)' }} dir="ltr">
                   {Math.round(progress)}%
                 </span>
               </motion.div>
@@ -226,14 +229,16 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
             {/* Progress bar track */}
             <div
               className="h-[3px] rounded-full overflow-hidden"
-              style={{ background: 'rgba(0,0,0,0.08)' }}
+              style={{ background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)' }}
             >
               <motion.div
                 className="h-full rounded-full"
                 style={{
-                  background: 'linear-gradient(90deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.5) 50%, rgba(0,0,0,0.3) 100%)',
+                  background: isDark
+                    ? 'linear-gradient(90deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.5) 50%, rgba(255,255,255,0.3) 100%)'
+                    : 'linear-gradient(90deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.5) 50%, rgba(0,0,0,0.3) 100%)',
                   width: `${progress}%`,
-                  boxShadow: progress > 0 ? '0 0 8px rgba(0,0,0,0.15)' : 'none',
+                  boxShadow: progress > 0 ? (isDark ? '0 0 8px rgba(255,255,255,0.1)' : '0 0 8px rgba(0,0,0,0.15)') : 'none',
                 }}
                 transition={{ duration: 0.05 }}
               />
@@ -243,7 +248,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
       ) : (
         <motion.div
           className="fixed inset-0"
-          style={{ background: '#FFFFFF' }}
+          style={{ background: isDark ? '#0F0F0F' : '#FFFFFF' }}
           initial={{ opacity: 1 }}
           animate={{ opacity: 0 }}
           transition={{ duration: 0.5, ease: 'easeInOut' }}
