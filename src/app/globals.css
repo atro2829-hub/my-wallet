@@ -206,6 +206,34 @@ button, [role="button"] {
   user-select: none;
 }
 
+/* Make app feel native - disable text selection on most elements */
+div, span, p, h1, h2, h3, h4, h5, h6, a, label, li, td, th {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Allow text selection only in input areas and long-press content */
+input, textarea, [contenteditable="true"], .selectable-text {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* Disable long-press context menu on images and links */
+img, a {
+  -webkit-touch-callout: none;
+}
+
+/* Disable pinch zoom and double-tap zoom globally */
+html {
+  touch-action: manipulation;
+}
+
+/* Disable pull-to-refresh (native feel) */
+body {
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
 /* Smooth scrolling */
 .scroll-smooth {
   scroll-behavior: smooth;

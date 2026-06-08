@@ -13,6 +13,7 @@ import { currencySymbols, currencyNames, formatNumber, generateReference } from 
 import { ref, set, get, push, onValue, update } from 'firebase/database';
 import { database } from '@/lib/firebase';
 import { LOGO_BASE64 } from '@/lib/logo';
+import { shareContent, copyToClipboard, hapticImpact, hapticNotification } from '@/lib/native-helpers';
 
 type Currency = 'YER' | 'SAR' | 'USD';
 type CardTheme = 'red' | 'green' | 'blue' | 'gold';
@@ -193,14 +194,30 @@ export default function GiftCardScreen() {
     setIsSending(false);
   };
 
-  const handleCopyCode = (code: string) => {
-    navigator.clipboard?.writeText(code);
-    setCopiedCode(code);
-    setTimeout(() => setCopiedCode(null), 2000);
+  const handleCopyCode = async (code: string) => {
+    hapticImpact('light');
+    const copied = await copyToClipboard(code);
+    if (copied) {
+      setCopiedCode(code);
+      setTimeout(() => setCopiedCode(null), 2000);
+    }
+  };
+
+  const handleShareCode = async (code: string, amount: number, currency: Currency) => {
+    hapticImpact('medium');
+    const message = `لقد أرسلت لك بطاقة هدية من محفظة الجنوب!\n\nكود الهدية: ${code}\nالمبلغ: ${formatNumber(amount)} ${currencySymbols[currency]}\n\nقم بإدخال الكود في تطبيق محفظة الجنوب لاستلام الهدية.`;
+    const shared = await shareContent({
+      title: 'بطاقة هدية - محفظة الجنوب',
+      text: message,
+    });
+    if (!shared) {
+      // Fallback to WhatsApp
+      handleWhatsAppShare(code);
+    }
   };
 
   const handleWhatsAppShare = (code: string) => {
-    const message = `🎉 لقد أرسلت لك بطاقة هدية من محفظة الجنوب!\n\nكود الهدية: ${code}\n\nقم بإدخال الكود في تطبيق محفظة الجنوب لاستلام الهدية.`;
+    const message = `لقد أرسلت لك بطاقة هدية من محفظة الجنوب!\n\nكود الهدية: ${code}\n\nقم بإدخال الكود في تطبيق محفظة الجنوب لاستلام الهدية.`;
     const url = `https://wa.me/?text=${encodeURIComponent(message)}`;
     window.open(url, '_blank');
   };
@@ -277,6 +294,14 @@ export default function GiftCardScreen() {
                       </button>
                     </div>
                     <div className="flex gap-2">
+                      <button
+                        onClick={() => handleShareCode(generatedCode, parseFloat(amount), currency)}
+                        className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium text-white"
+                        style={{ background: '#2563EB' }}
+                      >
+                        <Share2 size={16} />
+                        <span>مشاركة</span>
+                      </button>
                       <button
                         onClick={() => handleWhatsAppShare(generatedCode)}
                         className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium text-white"
@@ -499,6 +524,13 @@ export default function GiftCardScreen() {
                               style={{ background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)' }}
                             >
                               {copiedCode === card.code ? <Check size={14} color="#10B981" /> : <Copy size={14} color={subTextColor} />}
+                            </button>
+                            <button
+                              onClick={() => handleShareCode(card.code, card.amount, card.currency)}
+                              className="p-1.5 rounded-lg"
+                              style={{ background: 'rgba(37,99,235,0.12)' }}
+                            >
+                              <Share2 size={14} color="#2563EB" />
                             </button>
                             <button
                               onClick={() => handleWhatsAppShare(card.code)}

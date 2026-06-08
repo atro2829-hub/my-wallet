@@ -26,6 +26,7 @@ import { currencySymbols, currencyNames, currencyFlags, currencyBadgeColors, gen
 import { useToast } from '@/components/fahed/toast-provider';
 import { database } from '@/lib/firebase';
 import { ref, get, update, push } from 'firebase/database';
+import { copyToClipboard, shareContent, hapticImpact, hapticNotification } from '@/lib/native-helpers';
 
 type Currency = 'YER' | 'SAR' | 'USD';
 type TransferMode = 'userId' | 'phone';
@@ -381,12 +382,20 @@ export default function TransferModal() {
   };
 
   const handleCopyRef = async () => {
-    try {
-      await navigator.clipboard.writeText(transferRef);
+    hapticImpact('light');
+    const copied = await copyToClipboard(transferRef);
+    if (copied) {
       showToast('success', 'تم النسخ', 'تم نسخ رقم المرجع');
-    } catch {
-      // Fallback
     }
+  };
+
+  const handleShareReceipt = async () => {
+    hapticImpact('medium');
+    const receiptText = `إيصال تحويل - محفظة الجنوب\nرقم المرجع: ${transferRef}\nالمبلغ: ${transferAmount} ${currencySymbols[transferCurrency]}\nالتاريخ: ${new Date().toLocaleDateString('ar-SA')}`;
+    await shareContent({
+      title: 'إيصال تحويل - محفظة الجنوب',
+      text: receiptText,
+    });
   };
 
   return (
@@ -680,6 +689,14 @@ export default function TransferModal() {
                     سيتم التنفيذ في: {new Date(scheduledDate).toLocaleDateString('ar-SA')}
                   </p>
                 )}
+                <button
+                  onClick={handleShareReceipt}
+                  className="mt-4 flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium"
+                  style={{ background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)', color: isDark ? '#FFF' : '#1a1a1a' }}
+                >
+                  <Share2 size={16} />
+                  <span>مشاركة الإيصال</span>
+                </button>
               </motion.div>
             )}
 

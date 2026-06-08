@@ -35,6 +35,8 @@ import {
 import { useAppStore } from '@/lib/store';
 import { database } from '@/lib/firebase';
 import { ref, get } from 'firebase/database';
+import { update } from 'firebase/database';
+import { shareContent, hapticImpact, copyToClipboard } from '@/lib/native-helpers';
 
 interface SettingsItem {
   id: string;
@@ -154,7 +156,19 @@ function GeneralSettingsModal({ isDark, onClose }: { isDark: boolean; onClose: (
   };
 
   const handleThemeToggle = () => {
-    setTheme(theme === 'dark' ? 'light' : 'dark');
+    const newTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(newTheme);
+    // Sync Zustand store with next-themes
+    useAppStore.getState().setTheme(newTheme as 'light' | 'dark');
+    // Persist theme to Firebase if user is authenticated
+    const currentUser = useAppStore.getState().user;
+    if (currentUser?.id) {
+      try {
+        update(ref(database, `users/${currentUser.id}`), { theme: newTheme });
+      } catch (e) {
+        console.warn('Failed to persist theme to Firebase:', e);
+      }
+    }
   };
 
   const sectionStyle = {
@@ -391,8 +405,27 @@ export default function SettingsScreen() {
   const handleItemClick = (item: SettingsItem) => {
     if (item.id === 'general' || item.id === 'language') {
       setShowGeneralSettings(true);
+    } else if (item.id === 'share') {
+      handleShareApp();
     } else if (item.screen) {
       setActiveScreen(item.screen);
+    }
+  };
+
+  const handleShareApp = async () => {
+    hapticImpact('light');
+    const userId = user?.userId || '';
+    const shareText = `محفظة الجنوب - محفظتك الرقمية\nقم بتحميل تطبيق محفظة الجنوب الآن وأدخل رقمي ${userId} للحصول على مكافأة!\nhttps://play.google.com/store/apps/details?id=com.qtbm.south`;
+    const shared = await shareContent({
+      title: 'محفظة الجنوب',
+      text: shareText,
+    });
+    if (!shared) {
+      // Fallback: copy to clipboard
+      const copied = await copyToClipboard(shareText);
+      if (copied) {
+        alert('تم نسخ رابط الدعوة إلى الحافظة');
+      }
     }
   };
 

@@ -5,19 +5,37 @@ const config: CapacitorConfig = {
   appName: 'محفظة الجنوب',
   webDir: 'out',
   server: {
-    androidScheme: 'https'
+    androidScheme: 'https',
+    // No cleartext - use HTTPS scheme
   },
   plugins: {
     SplashScreen: {
-      launchAutoHide: false,
-      backgroundColor: '#FFFFFF',
+      launchAutoHide: true,
+      backgroundColor: '#E60000',
       showSpinner: false,
-    }
+      androidSplashResourceName: 'splash',
+      androidScaleType: 'CENTER_CROP',
+      splashFullScreen: true,
+      splashImmersive: true,
+    },
+    StatusBar: {
+      style: 'LIGHT',
+      backgroundColor: '#E60000',
+    },
+    App: {
+      launchAutoHide: true,
+    },
   },
   android: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#E60000',
     allowMixedContent: true,
-  }
+    // Make WebView feel native
+    useLegacyBridge: false,
+  },
+  // Prevent web-like behavior
+  preferences: {
+    ScrollEnabled: false,
+  },
 };
 
 export default config;

@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { useAppStore } from '@/lib/store';
 import { currencySymbols, currencyNames, currencyBadgeColors } from '@/lib/utils';
+import { shareContent, copyToClipboard, hapticImpact, hapticNotification } from '@/lib/native-helpers';
 
 type Currency = 'YER' | 'SAR' | 'USD';
 
@@ -70,18 +71,9 @@ export default function RequestMoneyModal() {
 
   const handleCopy = async () => {
     if (!requestText) return;
-    try {
-      await navigator.clipboard.writeText(requestText);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // Fallback for older browsers
-      const textArea = document.createElement('textarea');
-      textArea.value = requestText;
-      document.body.appendChild(textArea);
-      textArea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textArea);
+    hapticImpact('light');
+    const copied = await copyToClipboard(requestText);
+    if (copied) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
@@ -89,16 +81,13 @@ export default function RequestMoneyModal() {
 
   const handleShare = async () => {
     if (!requestText) return;
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: 'طلب أموال - محفظة الجنوب',
-          text: requestText,
-        });
-      } catch {
-        // User cancelled
-      }
-    } else {
+    hapticImpact('medium');
+    const shared = await shareContent({
+      title: 'طلب أموال - محفظة الجنوب',
+      text: requestText,
+    });
+    if (!shared) {
+      // Fallback to copy
       handleCopy();
     }
   };

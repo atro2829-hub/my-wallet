@@ -45,6 +45,7 @@ import OrderBottomSheet from '@/components/fahed/order-bottom-sheet';
 import SplashScreen from '@/components/fahed/splash-screen';
 import PinScreen from '@/components/fahed/pin-screen';
 import { useFirebaseSync } from '@/lib/use-firebase-sync';
+import { initializeNativeFeatures } from '@/lib/native-helpers';
 
 type AppPhase = 'splash' | 'pin' | 'main';
 
@@ -202,17 +203,27 @@ function AppContent() {
     const raf = requestAnimationFrame(() => {
       setShowUI(true);
     });
+    // Initialize native features (StatusBar, SplashScreen hide, etc.)
+    initializeNativeFeatures();
     return () => {
       mountedRef.current = false;
       cancelAnimationFrame(raf);
     };
   }, []);
 
+  // Sync Zustand store theme → next-themes
   useEffect(() => {
     if (mountedRef.current) {
       setTheme(storeTheme);
     }
   }, [storeTheme, setTheme]);
+
+  // Reverse sync: next-themes → Zustand store (prevents override when theme changes from modal)
+  useEffect(() => {
+    if (theme && theme !== storeTheme) {
+      useAppStore.getState().setTheme(theme as 'light' | 'dark');
+    }
+  }, [theme, storeTheme]);
 
   // Initialize Capacitor Push Notifications (safe, non-blocking, won't crash)
   useEffect(() => {
