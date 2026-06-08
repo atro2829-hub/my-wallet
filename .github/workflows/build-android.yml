@@ -45,30 +45,34 @@ jobs:
       - name: Sync Capacitor
         run: npx cap sync android
 
-      - name: Generate debug keystore for signing
+      - name: Generate release keystore for signing
         run: |
           keytool -genkeypair \
-            -alias debug \
+            -alias southwallet \
             -keyalg RSA \
             -keysize 2048 \
             -validity 10000 \
-            -keystore android/app/debug.keystore \
-            -storepass android123 \
-            -keypass android123 \
-            -dname "CN=Debug, OU=Debug, O=FahedNet, L=Aden, ST=Aden, C=YE"
+            -keystore android/app/south-wallet.keystore \
+            -storepass southwallet123 \
+            -keypass southwallet123 \
+            -dname "CN=South Wallet, OU=Mobile, O=QTBMSouth, L=Aden, ST=Aden, C=YE"
 
       - name: Inject signing config into build.gradle
         run: |
           cat >> android/app/build.gradle << 'EOF'
 
-          android.signingConfigs.debug {
-              storeFile file('debug.keystore')
-              storePassword 'android123'
-              keyAlias 'debug'
-              keyPassword 'android123'
+          android.signingConfigs.release {
+              storeFile file('south-wallet.keystore')
+              storePassword 'southwallet123'
+              keyAlias 'southwallet'
+              keyPassword 'southwallet123'
           }
-          android.buildTypes.debug.signingConfig android.signingConfigs.debug
-          android.buildTypes.release.signingConfig android.signingConfigs.debug
+          android.buildTypes.debug.signingConfig android.signingConfigs.release
+          android.buildTypes.release {
+              minifyEnabled false
+              proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+              signingConfig android.signingConfigs.release
+          }
           EOF
 
       - name: Build Debug APK
@@ -79,14 +83,24 @@ jobs:
         working-directory: android
         run: ./gradlew bundleRelease
 
+      - name: Build Release APK
+        working-directory: android
+        run: ./gradlew assembleRelease
+
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
-          name: debug-apk
+          name: south-wallet-debug-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Upload Release APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: south-wallet-release-apk
+          path: android/app/build/outputs/apk/release/app-release.apk
 
       - name: Upload Release AAB
         uses: actions/upload-artifact@v4
         with:
-          name: release-aab
+          name: south-wallet-release-aab
           path: android/app/build/outputs/bundle/release/app-release.aab
